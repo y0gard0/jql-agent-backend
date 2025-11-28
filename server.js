@@ -69,5 +69,9 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
+app.get('/', (req, res) => {
+    res.status(200).send('JQL Proxy Server is running and waiting for POST requests on /generate-jql');
+});
+
 // Eksportowanie aplikacji jest kluczowe dla Serverless
 module.exports = app;
