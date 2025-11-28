@@ -1,17 +1,17 @@
-// Kod w CommonJS (CJS) - stabilny na Vercel
-require('dotenv').config(); 
-const express = require('express');
-const cors = require('cors');
-const { GoogleGenAI } = require('@google/genai');
+// Kod w ES Modules (ESM) - to powinno rozwiązać problem z require() biblioteki Google
+
+// Importujemy dotenv w wersji ESM
+import 'dotenv/config'; 
+
+import express from 'express';
+import cors from 'cors';
+import { GoogleGenAI } from '@google/genai';
 
 const app = express();
-// Port nie jest używany przez Serverless, ale potrzebny do lokalnego testowania
 const PORT = process.env.PORT || 3000; 
 
 // 1. Inicjalizacja Gemini API
-// Klucz jest odczytywany BEZPIECZNIE ze zmiennej środowiskowej
 const apiKey = process.env.GEMINI_API_KEY; 
-// W Serverless (Vercel) nie musimy wychodzić, ale zostawiamy sprawdzanie
 if (!apiKey) {
     console.warn("Ostrzeżenie: Brak klucza GEMINI_API_KEY. Ustaw go w Vercel.");
 }
@@ -22,7 +22,6 @@ const JQL_SYSTEM_INSTRUCTION = "Jesteś ekspertem JQL. Twoim jedynym zadaniem je
 
 // 3. Middleware
 const corsOptions = {
-    // W środowisku produkcyjnym, zmień '*' na adres Twojej strony Bolt.host
     origin: '*', 
     optionsSuccessStatus: 200 
 };
@@ -37,7 +36,6 @@ app.post('/generate-jql', async (req, res) => {
         return res.status(400).json({ error: 'Brak tekstu do przetłumaczenia.' });
     }
     
-    // Zabezpieczenie przed brakiem klucza (dla Vercel)
     if (!process.env.GEMINI_API_KEY) {
         return res.status(500).json({ error: 'Błąd serwera: Klucz API nie jest skonfigurowany.' });
     }
@@ -57,21 +55,14 @@ app.post('/generate-jql', async (req, res) => {
 
     } catch (error) {
         console.error("Błąd Gemini API:", error);
-        res.status(500).json({ error: 'Wystąpił błąd serwera. Sprawdź klucz API.' });
+        res.status(500).json({ error: 'Wystąpił błąd serwera. Sprawdź klucz API i uprawnienia.' });
     }
 });
 
-// W Serverless Node.js (jak Vercel) nie nasłuchujemy na porcie, 
-// ale ten kod jest wymagany, aby Vercel rozpoznał to jako aplikację Express
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(`Serwer pośredniczący JQL działa lokalnie na porcie ${PORT}`);
-    });
-}
-
+// Dodajemy trasę zdrowotną
 app.get('/', (req, res) => {
     res.status(200).send('JQL Proxy Server is running and waiting for POST requests on /generate-jql');
 });
 
-// Eksportowanie aplikacji jest kluczowe dla Serverless
-module.exports = app;
+// Eksportowanie aplikacji w składni ESM
+export default app;
